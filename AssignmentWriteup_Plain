@@ -1,7 +1,9 @@
 #This document describes the procedures I took to complete the predmachlearn-012 assignment. 
+#Sorry for the lack of formatting, but messing around with Github is not a purpose of the class or a topic I need to learn right now. The technically-correct, the HTML version of this information is horrendous.
+#Nevertheless, I think that you will find that this content meets the assignment objectives very well. 
 library(caret);library (gmodels) ;library(Hmisc);library(psych)
 
-#Reading the csv into a dataframe. It was important to create NAs where #DIV/0 were an issue
+#First, read the csv into a dataframe. It was important to create NAs where #DIV/0 were an issue
 one0<-read.csv("pml-training.csv",header=TRUE,  na.strings=c("#DIV/0!"))
 one1<-one0
 #read in everything 8 to classe as character and coerce it to numeric
@@ -37,6 +39,7 @@ predtest<-predict(rf2,newdata=testing)
 
 #Check predictions to actual: There was a 100% accuracy rate from predictions to truth on the training set
 table(predtrain, training2$classe) 
+#Given the excellent in-sample error rates, I'd expect the out of sample error to be fairly low given how I should not have a biased model (it should be severely over-fitting). 
 
 #Check predictions to actual: There was a 99.12% accuracy rate from predictions to truth on the testing set
 table(predtest, testing$classe) 
