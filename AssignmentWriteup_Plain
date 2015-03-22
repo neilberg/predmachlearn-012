@@ -1,0 +1,47 @@
+#This document describes the procedures I took to complete the predmachlearn-012 assignment. 
+library(caret);library (gmodels) ;library(Hmisc);library(psych)
+
+#Reading the csv into a dataframe. It was important to create NAs where #DIV/0 were an issue
+one0<-read.csv("pml-training.csv",header=TRUE,  na.strings=c("#DIV/0!"))
+one1<-one0
+#read in everything 8 to classe as character and coerce it to numeric
+for(i in c(8:159))  
+{
+        one1[,i] = as.numeric(as.character(one0[,i]))
+}
+
+#now data are imported and all variables are numeric (except our DV of classe)
+#setting a seed for reproduceability
+set.seed=22
+#creating the training and testing partitions
+testIndex = createDataPartition(one1$classe, p = 0.30,list=FALSE)
+training0 = one1[-testIndex,]
+testing = one1[testIndex,]
+
+#get rid of nearZeroVars
+nzv <- nearZeroVar(training0)
+training1<-training0[,-nzv]
+#delete all non-sensor variables (columns 1:5) and all variables that contain NAs. Prediction failed when I retained any variables NAs, so I deleted all variable that contained any NAs in the training set. 
+#I got the column references from psych::describe (copied into excel to inspect, sorted by N, and copied the column references into "dels" -- it's not concise, but it allows me to have a visual/mental connection to the variables). Ideally, I'd code this to automatically identify and remove all columns with NAs and I'd do it prior to defining test and control sets, especially if this model weren't being created using static datasets.
+dels<-c(86,108, 1,2, 3,        4,        5,11,        12,        13,	14,	15,	16,	17,	18,	19,	20,	21,	22,	23,	24,	25,	26,	27,	28,	29,	30,	31,	32,	46,	56,	57,	58,	59,	60,	61,	62,	63,	64,	65,	66,	67,	68,	69,	70,	74,	75,	76,	77,	78,	79,	80,	81,	82,	83,	84,	85,	87,	88,	89,	90,	91,	92,	93,	94,	95,	96,	109,	110,	111,	112,	113,	114,	115,	116,	117,	119)
+training2<-training1[,-dels]
+
+#setting a seed for reproduceability
+set.seed=22
+#training a model using random forest on defaults
+rf2<-train(classe~.,data=training2, method="rf")
+
+#Predict using the model on the training set and the testing set
+predtrain<-predict(rf2,newdata=training2)
+predtest<-predict(rf2,newdata=testing)
+
+#Check predictions to actual: There was a 100% accuracy rate from predictions to truth on the training set
+table(predtrain, training2$classe) 
+
+#Check predictions to actual: There was a 99.12% accuracy rate from predictions to truth on the testing set
+table(predtest, testing$classe) 
+
+#The confusion matrices were consistent with tables above. The lowest sensitivity or specificity was .981. There was no reason to create a more complicated crossvalidation or to use varImp. This correctly predicted all 20 test cases for the class submission.
+confusionMatrix(predtrain, training2$classe)
+confusionMatrix(predtest, testing$classe)
+#I worked with some variants before settling on what turned out to be a simple model to run. My takeaways were (1) to coerce the predictors into one format before doing anything else, (2) to omit variables with missing values, and to (3) start with random forest. Getting the data to be clean and model-ready took longer than I expected it to. Random forest didn't take terribly long to run and it yielded excellent results without having to use options or complex forms of cross-validation.
